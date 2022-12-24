@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="package" default="package">
+  <dirname property="step.basedir" file="${ant.file.package}" />
+
+  <!--
+    START: load asl step
+  --> 
+  <property environment="env"/>
+  <property name="asl.libs.root" location="${step.basedir}/../libs" />
+  <import file="${asl.libs.root}/taskdefs.xml" />
+  <!--
+    END: load asl step
+  --> 
+
+  <!-- step properties -->
+  <basename property="step.name" file="${step.basedir}" />
+  <property name="step.tool.dir" location="${step.basedir}/tool" />
+  <property name="step.reports.dir" location="${dot.ci.dir}/${dot.reports.dir}/${step.name}" />
+  <property name="step.ci.dir" location="${dot.ci.dir}/${step.name}" />
+
+  <!-- step default properties -->
+  <property file="${step.basedir}/default.properties" />
+
+  <target name="init">
+    <mkdir dir="${step.reports.dir}" />
+    <mkdir dir="${step.ci.dir}" />
+  </target>
+
+  <target name="package" depends="init">
+
+    <!-- check params -->
+    <if>
+      <not>
+        <available file="${fileset.dir}" type="dir" />
+      </not>
+      <then>
+        <printLog message="fileset.dir(${fileset.dir}) variable is not exits." type="err"/>
+      </then>
+    </if>
+
+    <if>
+      <and>
+        <isset property="artifact.id" />
+        <not>
+          <equals arg1="${artifact.id}" arg2="" trim="true" />
+        </not>
+      </and>
+      <then>
+        <!-- 根据制品名称设置打包名称 -->
+        <var name="##package.name##" value="${artifact.id}" />
+        <if>
+          <and>
+            <isset property="artifact.version" />
+            <not>
+              <equals arg1="${artifact.version}" arg2="" trim="true" />
+            </not>
+          </and>
+          <then>
+            <var name="##package.name##" value="${##package.name##}-${artifact.version}" />
+          </then>
+        </if>
+      </then>
+      <else>
+        <printLog 
+          message="don't exist package name please set artifact.id properties." 
+          type="err"
+          />
+      </else>
+    </if>
+
+    <!-- 忽略隐藏文件或者目录 -->
+    <var name="##fileset.excludes##" value="**/.**/**" />
+    <if>
+      <isset property="fileset.excludes" />
+      <then>
+        <var name="##fileset.excludes##" value="${##fileset.excludes##},${fileset.excludes}" />
+      </then>
+    </if>
+
+    <var name="##package.dir##" value="${step.ci.dir}/${##package.name##}/${subdir}" />
+    <mkdir dir="${##package.dir##}" />
+
+    <!-- 拷贝需要打包的制品 -->
+    <copy todir="${##package.dir##}" verbose="true" overwrite="true">
+      <fileset dir="${fileset.dir}" 
+        includes="${fileset.includes}"
+        excludes="${##fileset.excludes##}" />
+    </copy>
+
+    <if>
+      <and>
+        <isset property="chmod.includes" />
+        <not>
+          <equals arg1="${chmod.includes}" arg2="" trim="true" />
+        </not>
+      </and>
+      <then>
+        <chmod dir="${##package.dir##}"
+          includes="${chmod.includes}"
+          perm="${chmod.perm}"
+          verbose="true"/>
+      </then>
+    </if>
+
+    <!-- 如果存在版本，将版本写入到版本文件中 -->
+    <if>
+      <and>
+        <isset property="artifact.version" />
+        <not>
+          <equals arg1="${artifact.version}" arg2="" trim="true" />
+        </not>
+      </and>
+      <then>
+        <echo message="${artifact.version}" file="${##package.dir##}/VERSION" />
+      </then>
+    </if>
+
+    <!-- 打包制品 -->
+    <if>
+      <istrue value="${action}" />
+      <then>
+
+        <var name="##dot.package.dir##" value="${step.ci.dir}/${##package.name##}" />
+
+        <fileset dir="${##dot.package.dir##}" id="package.fileset"/>
+        <pathconvert refid="package.fileset" property="package.filepath.str" setonempty="true"/>
+        <if>
+          <equals arg1="${package.filepath.str}" arg2="" trim="true" />
+          <then>
+            <printLog 
+              message="The package has not content" 
+              message.zh="包里面没有内容, 请检查配置" 
+              type="err" />
+          </then>
+        </if>
+
+        <if>
+          <isset property="os.windows" />
+          <then>
+            <tar destfile="${ws.dir}/${##package.name##}.tar.gz"
+              basedir="${##dot.package.dir##}"
+              compression="gzip" includes="**/*" />
+          </then>
+          <else>
+            <exec executable="tar" 
+              dir="${##dot.package.dir##}"
+              failonerror="${failonerror}">
+              <arg value="-cvzf" />
+              <arg value="${ws.dir}/${##package.name##}.tar.gz" />
+              <arg value="." />
+            </exec>
+          </else>
+        </if>
+      </then>
+    </if>
+  </target>
+
+</project>

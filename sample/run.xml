@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="sample" default="sample">
+  <dirname property="step.basedir" file="${ant.file.sample}" />
+
+  <!--
+    START: load asl step
+  --> 
+  <property environment="env"/>
+  <property name="asl.libs.root" location="${step.basedir}/../libs" />
+  <import file="${asl.libs.root}/taskdefs.xml" />
+  <!--
+    END: load asl step
+  --> 
+
+  <!-- step properties -->
+  <basename property="step.name" file="${step.basedir}" />
+  <property name="step.tool.dir" location="${step.basedir}/tool" />
+  <property name="step.reports.dir" location="${dot.ci.dir}/${dot.reports.dir}/${step.name}" />
+  <property name="step.ci.dir" location="${dot.ci.dir}/${step.name}" />
+
+  <!-- step default properties -->
+  <property file="${step.basedir}/default.properties" />
+
+  <target name="init">
+    <mkdir dir="${step.reports.dir}" />
+    <mkdir dir="${step.ci.dir}" />
+  </target>
+
+  <target name="sample" depends="init">
+
+    <echo message="${arg1}" />
+    <echo message="${env.HELLO}" />
+
+    <echo message="basedir: ${basedir}" />
+    <echo message="hi, jenkins" />
+
+  </target>
+</project>

@@ -1,0 +1,40 @@
+<project name="asl-macros-ci">
+  <description>
+    原子任务ci相关宏(macro)的定义
+  </description>
+
+  <macrodef name="ci">
+    <attribute name="step" />
+    <element name="properties" optional="true" />
+    <sequential>
+      <if>
+        <not>
+          <isset property="steps.root" />
+        </not>
+        <then>
+          <printLog type="err"
+            message="steps.root is not set"
+            message.zh="steps.root没有设置" 
+            />
+        </then>
+      </if>
+
+      <var name="step.run.xml" value="${steps.root}/@{step}/run.xml" />
+      <if>
+        <available file="${step.run.xml}" />
+        <then>
+          <ant antfile="${step.run.xml}" inheritRefs="true">
+            <properties />
+          </ant>
+        </then>
+        <else>
+          <printLog type="err"
+            message="step[@{step}]/run.xml is not exists"
+            message.zh="step[@{step}]/run.xml文件不存在" 
+            />
+        </else>
+      </if>
+    </sequential>
+  </macrodef>
+
+</project>
