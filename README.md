@@ -1,6 +1,12 @@
-# ant steps
+# Ant Steps Library
 
-基于Ant进行包装，开发一套可以复用的构建脚本。
+## usage
 
-# ant文档
+```
+$ANT_HOME/bin/ant -f $STEPS_ROOT/sample/run.xml -Dbasedir=${WORKSPACE} -propertyfile sample.properties -logger org.apache.tools.ant.NoBannerLogger
+```
+
+## ant doc
+
 http://ant.apache.org/manual/index.html
+
